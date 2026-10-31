@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Training Sensors</string>
+    <string name="collector_channel_name">Polar H10 collection</string>
+    <string name="collector_channel_description">Persistent sensor collection and durable upload status</string>
+    <string name="enrollment_success">Phone connected. Continue setup below, then tap Start durable collection.</string>
+    <string name="samsung_background_guidance">Samsung/Galaxy requires both steps:\n1. Open Samsung app settings → Battery → Unrestricted.\n2. Open Never sleeping apps settings → Background usage limits → Never sleeping apps → add Training Sensors.\nUse the buttons above for each step. If the second button only opens App info, use the manual path: Settings → Battery and device care → Battery → Background usage limits → Never sleeping apps.\nAndroid cannot reliably verify the Never sleeping apps list, so tick the confirmation only after completing both steps.</string>
+</resources>

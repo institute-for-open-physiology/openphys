@@ -1,0 +1,18 @@
+{
+  "order": 0,
+  "title": "Now",
+  "sections": {
+    "ecg": {
+      "title": "ECG",
+      "info": "Your heart’s electrical activity."
+    },
+    "movement": {
+      "title": "Movement",
+      "info": "Sensor tilt estimated from gravity. Movement makes the estimate less certain."
+    },
+    "events": {
+      "title": "Events",
+      "info": "Context for your heart readings."
+    }
+  }
+}

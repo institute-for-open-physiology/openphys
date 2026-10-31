@@ -1,0 +1,15 @@
+{
+ "sensor": "Polar H10 chest strap",
+ "lead": "single lead (H10 chest-strap electrodes)",
+ "units": {
+  "time_s": "seconds from the start of the analysed recovery recording (H10 device clock)",
+  "ecg_uV": "microvolts, raw (unfiltered), true polarity"
+ },
+ "sampling_rate_hz": 129.8901025836633,
+ "context": "recovery, about 4 minutes after a 5 km rowing time trial; three monomorphic premature ventricular contractions",
+ "display_window_s": [
+  358.2,
+  369.45
+ ],
+ "beats_note": "beats.csv sample indices are 0-based rows of ecg.csv. qrs_on/off = QRS segment from the detector consensus + slope-energy segmentation; pvc = 1 for hand-reviewed PVCs."
+}

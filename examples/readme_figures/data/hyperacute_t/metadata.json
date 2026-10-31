@@ -1,0 +1,27 @@
+{
+ "sensor": "Polar H10 chest strap",
+ "lead": "single lead (H10 chest-strap electrodes)",
+ "units": {
+  "time_s": "seconds from the start of each analysed window (H10 device clock)",
+  "ecg_uV": "microvolts, raw (unfiltered), true polarity"
+ },
+ "context": {
+  "rest": "rest before a 5 km rowing time trial (~82 bpm)",
+  "exercise": "sprint finish of the same 5 km rowing time trial (~175 bpm)"
+ },
+ "panels": {
+  "rest": {
+   "sampling_rate_hz": 129.8786984907505,
+   "n_samples": 730,
+   "n_beats": 9
+  },
+  "exercise": {
+   "sampling_rate_hz": 129.85771749609225,
+   "n_samples": 730,
+   "n_beats": 16
+  }
+ },
+ "margin_s": 0.8,
+ "display_s": 4.0,
+ "beats_note": "sample indices are 0-based rows of ecg_<panel>.csv; empty qrs_on/off = no segment found (the fiducial is used instead); rr_prev_ms = R-R to the previous detected beat."
+}

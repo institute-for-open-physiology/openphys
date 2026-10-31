@@ -1,0 +1,5 @@
+# Public figure scripts (figures/*.py). The committed images were drawn with
+# numpy 2.5.4 / scipy 1.18.1 / matplotlib 3.11.2; older versions render visually identically.
+numpy>=2.0
+scipy>=1.10
+matplotlib>=3.8

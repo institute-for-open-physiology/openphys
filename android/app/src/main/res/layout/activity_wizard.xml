@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/canvas"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <TextView android:id="@+id/wizardProgress" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/muted" android:textSize="14sp" />
+        <TextView android:id="@+id/wizardTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:accessibilityHeading="true" android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" />
+        <TextView android:id="@+id/wizardBody" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:textColor="@color/ink" android:textSize="17sp" />
+
+        <LinearLayout
+            android:id="@+id/wizardSensorZone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <LinearLayout android:id="@+id/wizardSensorList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <TextView android:id="@+id/wizardScanStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:textColor="@color/muted" android:textSize="14sp" />
+            <EditText android:id="@+id/wizardManualId" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:hint="Or type the ID printed on the sensor" android:inputType="textCapCharacters" android:maxLength="32" android:textColor="@color/ink" android:textColorHint="@color/muted" />
+            <Button android:id="@+id/wizardUseTypedId" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use this sensor ID" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wizardBatteryZone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <Button android:id="@+id/wizardBattery" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Allow unrestricted battery use" />
+            <Button android:id="@+id/wizardDataUsage" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Allow unrestricted data usage" />
+            <Button android:id="@+id/wizardManufacturerSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open Samsung app settings" android:visibility="gone" />
+            <Button android:id="@+id/wizardSleepingApps" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open Never sleeping apps settings" android:visibility="gone" />
+            <Button android:id="@+id/wizardManufacturerHelp" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open background-settings instructions" android:visibility="gone" />
+            <CheckBox android:id="@+id/wizardManufacturerConfirm" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/muted" android:textColor="@color/ink" android:visibility="gone" />
+            <TextView android:id="@+id/wizardBatteryStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:textColor="@color/muted" android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wizardHeartbeatZone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView android:id="@+id/wizardHeartRate" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:textColor="@color/up" android:textSize="52sp" android:textStyle="bold" />
+            <TextView android:id="@+id/wizardHeartbeatStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:textColor="@color/ink" android:textSize="16sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/wizardDoneZone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <Button android:id="@+id/wizardOpenDashboard" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open my dashboard" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/wizardBlocking" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:textColor="@color/muted" android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/wizardBack" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Back" />
+            <Button android:id="@+id/wizardNext" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Next" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,91 @@
+{
+  "sensor": "seca CT331 (custo cardio 300 BT), 12-lead ECG",
+  "electrode_placement": "torso (Mason-Likar) for both recordings, unchanged between them",
+  "sampling_rate_hz": 2000,
+  "units": "digital units; divide by adc_gain_per_mV for millivolts (one unit = 0.763 uV)",
+  "adc_gain_per_mV": 1310.615989515072,
+  "time_reference": "relative only (seconds within each strip, milliseconds from each beat fiducial); no wall-clock time is included",
+  "strips": {
+    "leads": [
+      "I",
+      "II",
+      "III",
+      "aVR",
+      "aVL",
+      "aVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ],
+    "missing_value": -2147483648,
+    "filtering": "none; the figure applies a 0.5-100 Hz display band-pass",
+    "layout": "pad_samples of padding, window_samples shown, pad_samples of padding",
+    "rest": {
+      "context": "lying down, about 62 bpm",
+      "beats_in_window": 3
+    },
+    "run": {
+      "context": "running, about 165 bpm",
+      "beats_in_window": 8
+    }
+  },
+  "beats": {
+    "leads": [
+      "I",
+      "II",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6"
+    ],
+    "derived_limb_leads": {
+      "III": "II - I",
+      "aVR": "-(I + II) / 2",
+      "aVL": "I - II / 2",
+      "aVF": "II - I / 2"
+    },
+    "encoding": "value = counts + offset[:, None, :] (int16 + int32 per-beat, per-lead offset)",
+    "note": "the analysis beat arrays are aligned to sub-sample fiducials (interpolated); they are published rounded to the device's digital unit (<= 0.38 uV error)",
+    "rest": {
+      "context": "lying down",
+      "n_beats": 523
+    },
+    "run": {
+      "context": "running, heart rate 162-172 bpm bucket",
+      "n_candidates": 270,
+      "n_included": 256,
+      "inclusion": "beats excluded from the average for noise / morphology QC are marked run_included = False"
+    }
+  },
+  "analysis": {
+    "pre_qrs_seed_reference_ms": [
+      -85,
+      -68
+    ],
+    "spatial_velocity": "3rd-order Butterworth 100 Hz low-pass of the mean beat; leads I, II, V1-V6",
+    "sv_baseline_ms": [
+      -110,
+      -70
+    ],
+    "qrs_onset_threshold_uV_per_ms": 5,
+    "qrs_offset_threshold_uV_per_ms": 20,
+    "run_qrs_offset_override_ms": 33.0,
+    "run_qrs_offset_override_reason": "the S upstroke bends gradually into the upsloping ST segment; the threshold marks the start of the bend (set by eye on review)",
+    "voltage_reference": "mean of the samples 10 ms to 0.5 ms before the global QRS onset",
+    "cross_check_gates_ms": {
+      "rest": [
+        -64,
+        45
+      ],
+      "run": [
+        -60,
+        50
+      ]
+    }
+  }
+}

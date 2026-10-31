@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>12-lead ECG · Carolina</title>
+<style>
+:root{font:15px system-ui;color:#14232f;background:#f3f6f8}body{margin:0}header,main{max-width:1440px;margin:auto;padding:20px}header{display:flex;align-items:center;gap:24px}h1{font-size:22px;margin:0}a{color:#086b85}section{background:white;border:1px solid #dce5eb;border-radius:10px;padding:16px;margin-bottom:16px}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:16px}select,button,input{font:inherit}select,button{padding:8px;max-width:100%}#recordings{max-width:650px}#status{line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}#error{color:#a11d23;white-space:pre-wrap;overflow-wrap:anywhere}#plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.lead{position:relative;border:1px solid #e0e8ed;border-radius:7px;overflow:hidden}.lead b{position:absolute;left:8px;top:6px;color:#075f77}canvas{width:100%;height:160px;display:block}.muted{color:#546975;font-size:13px}#position{flex:1;min-width:200px}#range{font-variant-numeric:tabular-nums}#downloads{display:flex;gap:16px;flex-wrap:wrap}@media(max-width:700px){#plots{grid-template-columns:1fr}header{flex-wrap:wrap}}
+</style>
+<header><h1>12-lead ECG</h1><a href="/admin">Connected users</a><a href="/">Home</a></header>
+<main><section><div class="controls"><label>Recording <select id="recordings"><option>Loading…</option></select></label><button id="refresh">Refresh</button><label><input id="live" type="checkbox" checked> Follow live</label></div><p id="status" aria-live="polite"></p><p id="error" role="alert"></p></section>
+<section><div class="controls"><label>Window <select id="seconds"><option value="2">2 seconds</option><option value="5" selected>5 seconds</option><option value="10">10 seconds</option></select></label><label>Scale <select id="scale"><option value="250">±250 µV</option><option value="500">±500 µV</option><option value="1000">±1 mV</option><option value="2000">±2 mV</option><option value="5000" selected>±5 mV</option></select></label><label><input id="center" type="checkbox" checked> Center each lead</label></div><div class="controls"><label for="position">Archive chunk</label><input id="position" type="range" min="0" max="0" value="0"><span id="range"></span></div><p class="muted">Simultaneous leads; horizontal grid 0.2 s, vertical grid 0.5 mV. Min/max envelopes preserve peaks at screen resolution. Centering subtracts each visible lead’s mean for display only. The full-rate raw archive is unchanged. Calibration is based on the independently decoded gain-6 protocol; this is a research view.</p><div id="plots"></div><p id="preview" class="muted"></p><div id="downloads"></div></section></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);let sessions=[],snapshot=null,busy=false,selected='',generation=0,pending=false,pendingRelist=false,followNotice='';
+const labels=['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+for(const label of labels){const box=document.createElement('div');box.className='lead';const title=document.createElement('b');title.textContent=label;const canvas=document.createElement('canvas');canvas.setAttribute('aria-label',label+' ECG waveform');box.append(title,canvas);$('plots').append(box)}
+async function api(path){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),10000);
+ try{
+  const r=await fetch(path,{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+  if(r.status===401)throw Error('Session expired. Sign in from Home, then return here.');
+  if(!r.ok)throw Error('Request failed ('+r.status+'). The saved recording remains in the archive.');
+  return await r.json();
+ }catch(e){
+  if(e.name==='AbortError')throw Error('Request timed out. Live polling will retry; you can also press Refresh.');
+  throw e;
+ }finally{clearTimeout(timer)}
+}
+function current(){return sessions.find(s=>s.session_id===selected)}
+function base(s){return '/api/v1/users/'+encodeURIComponent(s.user_id)+'/seca/'+encodeURIComponent(s.session_id)}
+function report(e){$('error').textContent=e.message||String(e)}
+function sameRecorder(a,b){return a.user_id===b.user_id&&a.installation_id===b.installation_id&&a.device_id===b.device_id}
+async function list(requestGeneration){
+ const result=await api('/api/v1/admin/seca/sessions');if(requestGeneration!==generation)return;
+ const previous=current();sessions=result.sessions;const old=selected;
+ // The list is capped; retain an older selection rather than switching owners.
+ if(previous&&!sessions.some(s=>s.session_id===old))sessions.push(previous);
+ selected=sessions.some(s=>s.session_id===old)?old:(sessions[0]?.session_id||'');
+ if($('live').checked&&previous){
+  const latest=sessions.filter(s=>sameRecorder(s,previous)&&s.started_unix_ms>=previous.started_unix_ms)
+   .reduce((best,s)=>!best||s.started_unix_ms>best.started_unix_ms?s:best,null);
+  if(latest&&latest.started_unix_ms>previous.started_unix_ms){
+   selected=latest.session_id;snapshot=null;draw();
+   followNotice='Following a newer recording from the same device. Earlier recording '+previous.session_id.slice(0,8)+' remains available in Recording.\n';
+  }
+ }
+ const select=$('recordings');select.replaceChildren();for(const s of sessions){const o=document.createElement('option');o.value=s.session_id;o.textContent=new Date(s.started_unix_ms).toLocaleString()+' · '+s.device_id+' · '+s.sample_rate_hz/1000+' kHz · '+s.session_id.slice(0,8);select.append(o)}select.value=selected;
+ if(!selected){const o=document.createElement('option');o.textContent='No seca recordings received yet';select.append(o);$('status').textContent='Start a seca recording on the enrolled phone.'}
+}
+async function update(relist=false){
+ if(busy){pending=true;pendingRelist=pendingRelist||relist;return}
+ busy=true;
+ const requestGeneration=generation;
+ try{
+  if(relist||!selected)await list(requestGeneration);
+  if(requestGeneration!==generation)return;
+  const s=current();if(!s)return;
+  const requestedSession=s.session_id;
+  const end=$('live').checked?'':'?end='+$('position').value;
+  const value=await api(base(s)+'/snapshot'+end);
+  if(requestGeneration!==generation||requestedSession!==selected)return;
+  renderSnapshot(s,value);
+ }catch(e){if(requestGeneration===generation)report(e)}
+ finally{
+  busy=false;
+  if(pending){const relistAgain=pendingRelist;pending=false;pendingRelist=false;void update(relistAgain)}
+ }
+}
+function renderSnapshot(s,value){snapshot=value;Object.assign(s,value.summary);$('position').max=s.last_batch_index;$('position').value=value.end_batch_index;$('range').textContent=value.end_batch_index+' / '+s.last_batch_index;const age=Math.max(0,(Date.now()-s.received_unix_ms)/1000);$('status').textContent=followNotice+s.sample_rate_hz/1000+' kHz · '+s.transport+' · gain '+s.gain+' · '+s.sample_count.toLocaleString()+' decoded samples per lead · '+s.packet_count.toLocaleString()+' wire records\n'+(s.end_reason?'Ended: '+s.end_reason:'Last cloud receipt '+age.toFixed(0)+' s ago')+' · battery '+(s.battery_percent===null?'unknown':s.battery_percent+'%')+(s.charging?' (charging)':'')+'\nLatest wire capture: '+new Date(s.last_capture_unix_ns/1e6).toLocaleString()+' ('+Math.max(0,(Date.now()-s.last_capture_unix_ns/1e6)/1000).toFixed(0)+' s ago; late uploads can be backfill)'+'\nLatest ECG capture: '+(s.last_ecg_capture_unix_ns===null?'none yet':new Date(s.last_ecg_capture_unix_ns/1e6).toLocaleString()+' ('+Math.max(0,(Date.now()-s.last_ecg_capture_unix_ns/1e6)/1000).toFixed(0)+' s ago)')+'\nOwner: '+s.user_id+'\nMissing blocks: '+s.missing_blocks+' · sequence errors: '+s.sequence_errors+' · decode errors: '+s.decode_errors+' · electrode detection '+(s.contact_detection?'enabled':'disabled (contact quality unknown)');$('error').textContent=[...new Set([s.last_error,...value.errors].filter(Boolean))].join('\n');$('preview').textContent=value.preview+(value.truncated?' · Preview capped at 6,000 envelope points; choose an earlier chunk to see older data.':'')+' · Available preview: '+(value.rows.length?(value.rows.at(-1).sample-value.rows[0].sample+value.stride)/s.sample_rate_hz:0).toFixed(2)+' seconds across at most 3 chunks. A longer selected window includes blank time; select earlier chunks to replay older data.'+' · gaps in this preview: '+value.gap_count;const downloads=$('downloads');downloads.replaceChildren();for(let i=Math.max(0,value.end_batch_index-2);i<=value.end_batch_index;i++){const a=document.createElement('a');a.href=base(s)+'/chunks/'+i;a.textContent='Download raw chunk '+i;downloads.append(a)}draw();}
+function changeView(relist=false){
+ generation+=1;snapshot=null;draw();$('status').textContent='Loading selected recording…';$('error').textContent='';
+ void update(relist);
+}
+
+function draw(){const rows=snapshot?.rows||[];if(!rows.length){for(const c of document.querySelectorAll('canvas'))c.getContext('2d').clearRect(0,0,c.width,c.height);return}const fs=snapshot.summary.sample_rate_hz,seconds=Number($('seconds').value),amplitude=Number($('scale').value),end=rows.at(-1).sample/fs,start=end-seconds,visible=rows.filter(r=>r.sample/fs>=start&&r.sample/fs<=end),stride=snapshot.stride;
+ document.querySelectorAll('canvas').forEach((canvas,lead)=>{const dpr=devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);const c=canvas.getContext('2d');c.scale(dpr,dpr);c.fillStyle='#fff';c.fillRect(0,0,w,h);c.lineWidth=1;c.strokeStyle='#f5dfe3';c.beginPath();for(let t=Math.ceil(start/.2)*.2;t<=end;t+=.2){const x=(t-start)/seconds*w;c.moveTo(x,0);c.lineTo(x,h)}for(let v=-amplitude;v<=amplitude;v+=500){const y=h/2-v/amplitude*h/2;c.moveTo(0,y);c.lineTo(w,y)}c.stroke();const values=visible.filter(r=>r.low[lead]!==null&&r.high[lead]!==null);const mean=$('center').checked&&values.length?values.reduce((s,r)=>s+(r.low[lead]+r.high[lead])/2,0)/values.length:0;c.strokeStyle='#08778b';c.lineWidth=1;c.beginPath();let prev=null;for(const r of visible){if(r.low[lead]===null||r.high[lead]===null){prev=null;continue}const x=(r.sample/fs-start)/seconds*w,lo=h/2-(r.low[lead]-mean)/amplitude*h/2,hi=h/2-(r.high[lead]-mean)/amplitude*h/2,mid=(lo+hi)/2;if(prev&&!r.gap&&r.sample-prev.sample<=stride*2&&r.sample>prev.sample){c.moveTo(prev.x,prev.mid);c.lineTo(x,mid)}c.moveTo(x,lo);c.lineTo(x,hi);prev={x,mid,sample:r.sample}}c.stroke();c.fillStyle='#65737e';c.font='11px system-ui';c.fillText(seconds+' s · ±'+amplitude+' µV',w-130,h-7)})}
+$('recordings').onchange=()=>{selected=$('recordings').value;$('position').max=current()?.last_batch_index??0;$('position').value=$('position').max;$('live').checked=false;followNotice='';changeView()};$('refresh').onclick=()=>update(true);$('position').onchange=()=>{$('live').checked=false;followNotice='';changeView()};$('live').onchange=()=>{followNotice='';changeView(true)};for(const id of ['seconds','scale','center'])$(id).onchange=draw;window.addEventListener('resize',draw);update(true);setInterval(()=>{if($('live').checked)update(true)},2000);
+</script></html>

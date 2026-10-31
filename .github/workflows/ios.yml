@@ -1,0 +1,203 @@
+name: iOS build and release
+
+on:
+  push:
+    branches: [ios-client, main]
+    paths:
+      - 'ios/**'
+      - '!ios/**/*.md'
+      - '!ios/images/**'
+      - 'shared/**'
+      - 'scripts/mobile_contract.py'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '!ios/**/*.md'
+      - '!ios/images/**'
+      - 'shared/**'
+      - 'scripts/mobile_contract.py'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+    inputs:
+      testflight:
+        description: Upload iPhone and Watch apps to TestFlight
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    outputs:
+      tag: ${{ steps.package.outputs.tag }}
+      title: ${{ steps.package.outputs.title }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Test sensor logic and packaging
+        run: |
+          uv run --no-project python scripts/mobile_contract.py --check
+          swift test --package-path ios/H10Kit
+          uv run --no-project python -m unittest discover -s ios/scripts -p 'test_*.py'
+      - name: Compare native screens
+        run: |
+          xcodegen generate --spec ios/project.yml
+          device=$(xcrun simctl create TrainingSensorsParity com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-2)
+          trap 'xcrun simctl delete "$device"' EXIT
+          xcrun simctl boot "$device"
+          xcrun simctl bootstatus "$device" -b
+          xcrun simctl status_bar "$device" override --time 09:41 --batteryState charged --batteryLevel 100
+          xcodebuild -project ios/TrainingSensors.xcodeproj -scheme TrainingSensors \
+            -destination "platform=iOS Simulator,id=$device" \
+            -resultBundlePath ios/dist/Screens.xcresult \
+            -only-testing:TrainingSensorsUITests/SnapshotTests \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testBluetoothOffExplainsHowToRestoreRecording \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testBluetoothDeniedOffersAppSettings \
+            CODE_SIGNING_ALLOWED=NO test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iphone-screen-review
+          path: ios/dist/Screens.xcresult
+          retention-days: 14
+      - name: Build iPhone and Watch; package iPhone
+        id: package
+        run: |
+          uv run --no-project ios/scripts/package.py
+          uv run --no-project python - <<'PY'
+          import os
+          import pathlib
+          import plistlib
+          import zipfile
+
+          ipa, = pathlib.Path('ios/dist').glob('*.ipa')
+          with zipfile.ZipFile(ipa) as archive:
+              info = plistlib.loads(archive.read('Payload/TrainingSensors.app/Info.plist'))
+          version = info['CFBundleShortVersionString']
+          build = info['CFBundleVersion']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'tag=ios-v{version}-{build}\n')
+              output.write(f'title=Training Sensors {version} ({build})\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iphone-package
+          path: |
+            ios/dist/*.ipa
+            ios/dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: ios-release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.build.outputs.tag }}
+      RELEASE_TITLE: ${{ needs.build.outputs.title }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: iphone-package
+          path: dist
+      - name: Publish a new version
+        shell: bash
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS
+          gh api --paginate "repos/$GH_REPO/releases" \
+            | jq -s --arg tag "$RELEASE_TAG" 'add | map(select(.tag_name == $tag)) | first // empty' >release.json
+          if [ -s release.json ]; then
+            if jq -e '.draft == false' release.json >/dev/null; then
+              echo "Already released. Increase the version or build in ios/project.yml for a new release." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if ! jq -e --arg commit "$GITHUB_SHA" '.target_commitish == $commit' release.json >/dev/null; then
+              echo 'This version has a draft from another commit. Use a new build number.' >&2
+              exit 1
+            fi
+          else
+            cat >notes.md <<EOF
+          Install the IPA with SideStore: **My Apps > +**.
+
+          - iPhone: iOS 17+, Polar H10. No server account needed.
+          - Apple Watch: build from source with Xcode; the IPA is iPhone-only.
+
+          [Setup and screenshots](https://github.com/$GH_REPO/blob/$GITHUB_SHA/ios/README.md)
+          EOF
+            gh release create "$RELEASE_TAG" --draft --target "$GITHUB_SHA" \
+              --title "$RELEASE_TITLE" --notes-file notes.md
+          fi
+          gh release upload "$RELEASE_TAG" ./*.ipa SHA256SUMS --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
+          echo "[Download release](https://github.com/$GH_REPO/releases/tag/$RELEASE_TAG)" >> "$GITHUB_STEP_SUMMARY"
+
+  testflight:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.testflight && (github.ref == 'refs/heads/ios-client' || github.ref == 'refs/heads/main')
+    runs-on: macos-26
+    timeout-minutes: 25
+    concurrency:
+      group: ios-testflight
+      cancel-in-progress: false
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Sign and upload iPhone and Watch
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_P12_BASE64: ${{ secrets.APPLE_SIGNING_P12_BASE64 }}
+          APPLE_SIGNING_PASSWORD: ${{ secrets.APPLE_SIGNING_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APPLE_TEAM_ID APPLE_SIGNING_P12_BASE64 APPLE_SIGNING_PASSWORD ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "Missing GitHub secret: $name" >&2
+              exit 1
+            fi
+          done
+          umask 077
+          credentials=$(mktemp -d "$RUNNER_TEMP/testflight.XXXXXX")
+          keychain="$credentials/signing.keychain-db"
+          cleanup() {
+            security delete-keychain "$keychain" >/dev/null 2>&1 || true
+            rm -rf "$credentials"
+          }
+          trap cleanup EXIT
+          keychain_password=$(openssl rand -hex 32)
+          echo "::add-mask::$keychain_password"
+          printf '%s' "$APPLE_SIGNING_P12_BASE64" | base64 --decode > "$credentials/signing.p12"
+          printf '%s' "$ASC_PRIVATE_KEY" > "$credentials/AuthKey_${ASC_KEY_ID}.p8"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$credentials/signing.p12" -P "$APPLE_SIGNING_PASSWORD" -A -t cert -f pkcs12 -k "$keychain" >/dev/null
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" "$HOME/Library/Keychains/login.keychain-db"
+          export ASC_PRIVATE_KEY_PATH="$credentials/AuthKey_${ASC_KEY_ID}.p8"
+          uv run --no-project python ios/scripts/testflight.py --team "$APPLE_TEAM_ID" --upload
+          echo "Uploaded iPhone and Watch build. Processing, beta review, and tester invitations continue in App Store Connect." >> "$GITHUB_STEP_SUMMARY"

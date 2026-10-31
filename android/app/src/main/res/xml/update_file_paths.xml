@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Hash-verified update APKs staged for the system package installer. -->
+    <cache-path name="updates" path="updates/" />
+</paths>

@@ -1,0 +1,258 @@
+{
+ "sensor": "Polar H10 chest strap",
+ "lead": "single lead (H10 chest-strap electrodes)",
+ "units": {
+  "time_s": "seconds from the start of the analysed window (H10 device clock)",
+  "ecg_uV": "microvolts, raw (unfiltered), true polarity"
+ },
+ "sampling_rate_hz": 129.7776085477735,
+ "context": "near-maximum exercise on a rowing ergometer (heart rate ~160 bpm); one premature ventricular contraction",
+ "display_window_s": [
+  5.642,
+  10.442
+ ],
+ "hand_reviewed": {
+  "marks": [
+   {
+    "kind": "QRS",
+    "t0": 5.817665,
+    "t1": 5.894765
+   },
+   {
+    "kind": "R",
+    "t": 5.841265
+   },
+   {
+    "kind": "type",
+    "t": 5.841265,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 5.871665
+   },
+   {
+    "kind": "QRS",
+    "t0": 6.187565,
+    "t1": 6.256965
+   },
+   {
+    "kind": "R",
+    "t": 6.208765
+   },
+   {
+    "kind": "type",
+    "t": 6.208765,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 6.233765
+   },
+   {
+    "kind": "QRS",
+    "t0": 6.580565,
+    "t1": 6.649865
+   },
+   {
+    "kind": "R",
+    "t": 6.600065
+   },
+   {
+    "kind": "type",
+    "t": 6.600065,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 6.626765
+   },
+   {
+    "kind": "QRS",
+    "t0": 6.958165,
+    "t1": 7.027465
+   },
+   {
+    "kind": "R",
+    "t": 6.978265
+   },
+   {
+    "kind": "type",
+    "t": 6.978265,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 7.004365
+   },
+   {
+    "kind": "QRS",
+    "t0": 7.320265,
+    "t1": 7.397365
+   },
+   {
+    "kind": "R",
+    "t": 7.344365
+   },
+   {
+    "kind": "type",
+    "t": 7.344365,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 7.374265
+   },
+   {
+    "kind": "QRS",
+    "t0": 7.605365,
+    "t1": 7.697865
+   },
+   {
+    "kind": "R",
+    "t": 7.636665
+   },
+   {
+    "kind": "S",
+    "t": 7.667065
+   },
+   {
+    "kind": "QRS",
+    "t0": 7.858825,
+    "t1": 8.019997
+   },
+   {
+    "kind": "QRS",
+    "t0": 7.858825,
+    "t1": 8.173843
+   },
+   {
+    "kind": "S",
+    "t": 7.936765
+   },
+   {
+    "kind": "R",
+    "t": 7.996187
+   },
+   {
+    "kind": "type",
+    "t": 8.016334,
+    "label": "V"
+   },
+   {
+    "kind": "QRS",
+    "t0": 8.437565,
+    "t1": 8.506965
+   },
+   {
+    "kind": "R",
+    "t": 8.457065
+   },
+   {
+    "kind": "type",
+    "t": 8.457065,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 8.483765
+   },
+   {
+    "kind": "QRS",
+    "t0": 8.822865,
+    "t1": 8.892165
+   },
+   {
+    "kind": "R",
+    "t": 8.842565
+   },
+   {
+    "kind": "type",
+    "t": 8.842565,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 8.869065
+   },
+   {
+    "kind": "QRS",
+    "t0": 9.192765,
+    "t1": 9.262065
+   },
+   {
+    "kind": "R",
+    "t": 9.214965
+   },
+   {
+    "kind": "type",
+    "t": 9.214965,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 9.238965
+   },
+   {
+    "kind": "QRS",
+    "t0": 9.562565,
+    "t1": 9.639665
+   },
+   {
+    "kind": "R",
+    "t": 9.590965
+   },
+   {
+    "kind": "type",
+    "t": 9.590965,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 9.616565
+   },
+   {
+    "kind": "QRS",
+    "t0": 9.947865,
+    "t1": 10.017265
+   },
+   {
+    "kind": "R",
+    "t": 9.969765
+   },
+   {
+    "kind": "type",
+    "t": 9.969765,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 9.994065
+   },
+   {
+    "kind": "QRS",
+    "t0": 10.310065,
+    "t1": 10.379365
+   },
+   {
+    "kind": "R",
+    "t": 10.332965
+   },
+   {
+    "kind": "type",
+    "t": 10.332965,
+    "label": "N"
+   },
+   {
+    "kind": "S",
+    "t": 10.363965
+   }
+  ],
+  "marks_note": "times in time_s; each beat = QRS window(s) + R + S + type (N sinus, V ventricular). The V beat has two QRS windows: QRS-proper core and complex to baseline return.",
+  "pvc_qrs_core_s": [
+   7.859,
+   8.02
+  ],
+  "next_sinus_qrs_before_s": 8.43
+ }
+}

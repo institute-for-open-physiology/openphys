@@ -1,0 +1,3 @@
+Offer your best medical interpretation of this single-lead ECG strip, as an ECG machine would. Focus on everything that can be measured, including PR, QRS, QT and corrected QT. You have no clinical history or demographics. Use the supplied annotations and calculated measurements, and explain uncertainties or disagreements that matter. This is a draft for operator review.
+
+Return JSON with paragraph (the concise interpretation for the printout), findings (array of strings), limitations (array of strings), and review_priority (routine_review, repeat_recording, prompt_clinical_review or urgent_assessment).

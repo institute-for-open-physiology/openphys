@@ -1,0 +1,6 @@
+*.xcodeproj/
+TrainingSensors/Info.plist
+TrainingSensorsWatch/Info.plist
+H10Kit/.build/
+DerivedData/
+dist/

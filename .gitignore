@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.swp
+/data/
+/data_*/
+target/
+docs/vendor/
+
+
+# Added by cargo
+
+/target
+
+# Resting ECG prototype local environment and coverage artifacts
+/.venv-resting-ecg/
+/.coverage
+.pytest_cache/
+
+# Local secrets
+.env*
+!.env.example

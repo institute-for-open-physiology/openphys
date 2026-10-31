@@ -1,0 +1,13 @@
+{
+  "participant_id": "DEMO-001",
+  "archive_dir": "/absolute/path/to/parquet_archive_slice",
+  "sensor_id": "your_sensor_id",
+  "session_start": "2026-09-23T14:43:20+01:00",
+  "dependency_root": "/absolute/path/to/delineator_dependencies",
+  "codex_auth_file": "~/.codex/auth.json",
+  "model": "gpt-6-astra",
+  "model_effort": "high",
+  "source_mode": "historical_replay",
+  "external_model_authorized": false,
+  "fixture_note": "Historical replay. Protocol not observed."
+}

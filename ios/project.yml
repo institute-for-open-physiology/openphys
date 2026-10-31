@@ -1,0 +1,98 @@
+name: TrainingSensors
+options:
+  bundleIdPrefix: com.vineyardfinance
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  H10Kit:
+    path: H10Kit
+settings:
+  base:
+    APP_BUNDLE_IDENTIFIER: org.example.openphys  # set to a bundle ID registered to your Apple team
+    MARKETING_VERSION: "0.2.2"
+    CURRENT_PROJECT_VERSION: "15"
+targets:
+  TrainingSensors:
+    type: application
+    platform: iOS
+    sources:
+      - path: TrainingSensors
+      - path: ../shared
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: H10Kit
+      - target: TrainingSensorsWatch
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_IDENTIFIER)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: TrainingSensors/TrainingSensors.entitlements
+    info:
+      path: TrainingSensors/Info.plist
+      properties:
+        CFBundleDisplayName: Training Sensors
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSBluetoothAlwaysUsageDescription: Training Sensors connects to your Polar H10 to record ECG, motion and heart rate.
+        NSHealthUpdateUsageDescription: Save heart rate from your Polar H10 to Apple Health.
+        UIBackgroundModes: [bluetooth-central]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+  TrainingSensorsWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources: [TrainingSensorsWatch]
+    dependencies:
+      - package: H10Kit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_IDENTIFIER).watchkitapp
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: TrainingSensorsWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Training Sensors
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        WKCompanionAppBundleIdentifier: $(APP_BUNDLE_IDENTIFIER)
+        WKApplication: true
+        WKRunsIndependentlyOfCompanionApp: false
+  TrainingSensorsUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: TrainingSensorsUITests
+        excludes: [Snapshots]
+      - path: TrainingSensorsUITests/Snapshots
+        type: folder
+        buildPhase: resources
+      - path: ../shared/screens
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: TrainingSensors
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vineyardfinance.sensors.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+schemes:
+  TrainingSensorsWatch:
+    build:
+      targets:
+        TrainingSensorsWatch: all
+  TrainingSensors:
+    build:
+      targets:
+        TrainingSensors: all
+    test:
+      targets: [TrainingSensorsUITests]

@@ -1,0 +1,22 @@
+name: Linux quality gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install build and check dependencies
+        run: sudo apt-get update && sudo apt-get install --yes libdbus-1-dev pkg-config ripgrep
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.95.0
+          components: clippy,rustfmt
+      - name: Run repository quality gate on Linux
+        run: scripts/check.sh

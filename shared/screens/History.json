@@ -1,0 +1,31 @@
+{
+  "order": 1,
+  "title": "History",
+  "sections": {
+    "heartRate": {
+      "title": "Heart rate",
+      "unit": "bpm",
+      "info": "How many times your heart beats per minute."
+    },
+    "rr": {
+      "title": "RR interval",
+      "unit": "ms",
+      "info": "Time between heartbeats. Shorter intervals mean a faster heart rate."
+    },
+    "activity": {
+      "title": "Activity",
+      "unit": "mG",
+      "info": "How much the sensor moves. Taller bars mean more movement."
+    },
+    "rssi": {
+      "title": "Signal strength",
+      "unit": "dBm",
+      "info": "Bluetooth signal strength. Closer to zero means a stronger signal."
+    },
+    "delay": {
+      "title": "Packet delay",
+      "unit": "ms",
+      "info": "How long sensor data takes to reach your phone, based on the sensor’s clock."
+    }
+  }
+}

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/canvas"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:descendantFocusability="beforeDescendants"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Training Sensors" android:textColor="@color/ink" android:textSize="28sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Polar H10 background collector" android:textColor="@color/muted" android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/enrollmentSuccess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:accessibilityHeading="true"
+            android:background="@color/surface"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:importantForAccessibility="yes"
+            android:padding="18dp"
+            android:screenReaderFocusable="true"
+            android:text="@string/enrollment_success"
+            android:textColor="@color/up"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView android:id="@+id/setupStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:background="@color/surface" android:padding="16dp" android:textColor="@color/ink" android:textSize="19sp" android:textStyle="bold" />
+        <TextView android:id="@+id/enrollmentStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="10dp" android:textColor="@color/muted" />
+        <Button android:id="@+id/openWizard" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Set up my sensor (step by step)" />
+        <Button android:id="@+id/secaEcg" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="seca 12-lead ECG" />
+        <Button android:id="@+id/signIn" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Log in with email and password" />
+        <Button android:id="@+id/connectPhone" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open website to connect this phone" />
+        <Button android:id="@+id/logOut" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Log out" android:visibility="gone" />
+        <Button android:id="@+id/retryEnrollment" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Retry connection exchange" android:visibility="gone" />
+        <Button android:id="@+id/updateApp" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Download and install the update" android:visibility="gone" />
+
+        <TextView android:id="@+id/checklist" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:background="@color/surface" android:padding="16dp" android:textColor="@color/muted" android:textSize="14sp" />
+        <Button android:id="@+id/bluetoothSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Review Bluetooth" />
+        <Button android:id="@+id/permissionSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Grant Nearby devices permissions" />
+        <Button android:id="@+id/notificationSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Review notifications" />
+        <Button android:id="@+id/batterySettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Allow unrestricted battery use" />
+        <Button android:id="@+id/manufacturerSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open Samsung app settings" />
+        <Button android:id="@+id/manufacturerSleepingApps" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open Never sleeping apps settings" />
+        <Button android:id="@+id/manufacturerHelp" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open background-settings instructions" android:visibility="gone" />
+        <CheckBox android:id="@+id/manufacturerConfirm" android:layout_width="match_parent" android:layout_height="wrap_content" android:buttonTint="@color/muted" android:text="I set Battery to Unrestricted and reviewed Never sleeping apps" android:textColor="@color/ink" />
+        <TextView android:id="@+id/manufacturerGuidance" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:text="@string/samsung_background_guidance" android:textColor="@color/muted" android:textSize="12sp" />
+
+        <CheckBox android:id="@+id/locationConsent" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:buttonTint="@color/muted" android:text="Also record GPS location from this phone (optional)" android:textColor="@color/ink" />
+        <TextView android:id="@+id/locationStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:textColor="@color/muted" android:textSize="12sp" />
+        <Button android:id="@+id/locationBackgroundSettings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Allow location all the time" android:visibility="gone" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/statePanel"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/collector_state_panel_height"
+            android:layout_marginTop="20dp"
+            android:background="@color/surface"
+            android:fadeScrollbars="false"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="yes"
+                android:minHeight="@dimen/collector_state_panel_height"
+                android:padding="16dp"
+                android:textColor="@color/ink"
+                android:textSize="18sp" />
+        </androidx.core.widget.NestedScrollView>
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/telemetryPanel"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/telemetry_panel_height"
+            android:layout_marginTop="8dp"
+            android:background="@color/surface"
+            android:fadeScrollbars="false"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/telemetry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="yes"
+                android:minHeight="@dimen/telemetry_panel_height"
+                android:padding="16dp"
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+        </androidx.core.widget.NestedScrollView>
+
+        <EditText android:id="@+id/target" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:hint="H10 ID printed on your strap (after Polar H10)" android:inputType="textCapCharacters" android:maxLength="32" android:textColor="@color/ink" android:textColorHint="@color/muted" />
+        <Button android:id="@+id/start" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Start durable collection" />
+        <Button android:id="@+id/stop" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Stop collection" />
+        <Button android:id="@+id/dashboard" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open my dashboard" />
+        <TextView android:id="@+id/guidance" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="The persistent foreground-service notification reports collection and upload operation. It is not a medical or health alert." android:textColor="@color/muted" android:textSize="14sp" />
+        <TextView android:id="@+id/installation" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="@color/muted" android:textIsSelectable="true" android:textSize="12sp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

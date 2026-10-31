@@ -1,0 +1,11 @@
+{
+  "version": "resting-replay-0.1",
+  "session_duration_s": 240,
+  "settling_s": 120,
+  "search_end_s": 180,
+  "strip_duration_s": 10,
+  "motion_rms_max_mg": 20,
+  "motion_peak_max_mg": 80,
+  "threshold_status": "Engineering defaults, not validated clinical rest criteria",
+  "clinical_review": "Required before any exercise-clearance decision; workflow does not grant clearance"
+}

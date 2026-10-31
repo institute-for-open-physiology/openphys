@@ -1,0 +1,1 @@
+Review your Astra annotation on the attached beat plots, alongside the machine annotations you already assessed. Make any revisions you judge appropriate and return your final annotation in the same JSON format. Include a short review_notes string explaining what you changed or retained and why.

@@ -1,0 +1,38 @@
+[package]
+name = "training_sensors"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+argon2 = "0.5"
+axum = { version = "0.8", features = ["macros"] }
+arrow-array = "56"
+base64 = "0.22"
+arrow-schema = "56"
+btleplug = "0.11"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+clap = { version = "4", features = ["derive"] }
+fs2 = "0.4"
+futures = "0.3"
+hex = "0.4"
+hmac = "0.12"
+libc = "0.2"
+parquet = { version = "56", features = ["zstd"] }
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+rand = "0.9"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time", "test-util"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["limit", "trace"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+
+[dev-dependencies]
+rqrr = { version = "0.10.1", default-features = false }
+
+[patch.crates-io]
+btleplug = { path = "vendor/btleplug" }

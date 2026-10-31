@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/canvas" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Sign in and connect" android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" />
+        <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:textColor="@color/muted" android:accessibilityLiveRegion="polite" />
+        <EditText android:id="@+id/email" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" android:minHeight="48dp" android:hint="Email" android:inputType="textEmailAddress"
+            android:autofillHints="username" android:maxLength="254" android:singleLine="true"
+            android:textColor="@color/ink" android:textColorHint="@color/muted" />
+        <EditText android:id="@+id/password" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="48dp" android:hint="Password" android:inputType="textPassword"
+            android:autofillHints="password" android:saveEnabled="false" android:singleLine="true"
+            android:textColor="@color/ink" android:textColorHint="@color/muted" />
+        <Button android:id="@+id/signIn" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="Sign in and connect this phone" />
+        <Button android:id="@+id/retry" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Retry connection" android:visibility="gone" />
+        <Button android:id="@+id/forgotPassword" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Forgot password?" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="New here? First accept your invitation and set a password on the website. Once connected, this phone can upload recordings in the background."
+            android:textColor="@color/muted" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="collector_state_panel_height">96dp</dimen>
+    <dimen name="telemetry_panel_height">168dp</dimen>
+</resources>

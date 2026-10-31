@@ -1,0 +1,41 @@
+{
+  "sensor": "seca CT331 (custo cardio 300 BT), USB acquisition",
+  "context": "resting 12-lead recording (about 10 minutes) of a person with a cardiac pacemaker; every QRS is preceded by a ventricular pacing spike",
+  "sampling_rate_hz": 32000,
+  "units": "ADC counts; multiply by uv_per_count for microvolts",
+  "uv_per_count": 12.208,
+  "filtering": "none (native samples as decoded from the device stream)",
+  "recorded_channels": [
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "I",
+    "II"
+  ],
+  "derived_limb_leads": {
+    "III": "II - I",
+    "aVR": "-(I + II) / 2",
+    "aVL": "I - II / 2",
+    "aVF": "II - I / 2"
+  },
+  "time_reference": "seconds / samples from the start of the recording; no wall-clock time is included",
+  "window": {
+    "start_sample": 6281562,
+    "n_samples": 126400,
+    "note": "only this window of the recording is published (the figure's 2.95 s plus 0.5 s margin each side); the full recording is not included"
+  },
+  "n_paced_beats": 608,
+  "figure": {
+    "first_beat": 204,
+    "zoom_beat": 205,
+    "lead_in_s": 0.27,
+    "width_s": 2.95,
+    "zoom_ms": [
+      -3,
+      8
+    ]
+  }
+}
