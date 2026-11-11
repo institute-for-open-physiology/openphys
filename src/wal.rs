@@ -29,6 +29,8 @@ const WAL_CLOSED_SUFFIX: &str = ".closed";
 #[cfg(test)]
 const WAL_ARCHIVED_JSON_SUFFIX: &str = ".archived.json";
 const DEFAULT_WAL_SEGMENT_DURATION: Duration = Duration::from_secs(30 * 60);
+// The archiver reads a whole closed segment into memory, so segments must stay small.
+const DEFAULT_WAL_SEGMENT_MAX_BYTES: u64 = 64 * 1024 * 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SegmentHeader {
@@ -2253,7 +2255,7 @@ impl Default for WalRotationPolicy {
     fn default() -> Self {
         Self {
             max_duration: Some(DEFAULT_WAL_SEGMENT_DURATION),
-            max_bytes: None,
+            max_bytes: Some(DEFAULT_WAL_SEGMENT_MAX_BYTES),
             max_records: None,
         }
     }
@@ -3855,7 +3857,7 @@ mod tests {
         assert_eq!(writer_options.max_create_attempts, 16);
         let rotation = WalRotationPolicy::default();
         assert_eq!(rotation.max_duration, Some(Duration::from_secs(30 * 60)));
-        assert_eq!(rotation.max_bytes, None);
+        assert_eq!(rotation.max_bytes, Some(64 * 1024 * 1024));
         assert_eq!(rotation.max_records, None);
 
         let dir = TestDir::new("sidecar_helpers");
