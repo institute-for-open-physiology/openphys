@@ -38,7 +38,7 @@ class StatusPanelLayoutTest {
             "Connected: true",
             "RSSI: -72 dBm  Battery: 75%",
             "Freshness: ECG 45 ms, ACC 8 ms, HR 821 ms",
-            "Durable phone backlog: 3 records / 2024 bytes",
+            "Durable phone backlog: 3 records",
             "Upload: Durable ACK through 365714",
         ).joinToString("\n")
         val longError = buildString {

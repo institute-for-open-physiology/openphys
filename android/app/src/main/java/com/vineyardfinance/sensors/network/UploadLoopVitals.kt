@@ -36,6 +36,7 @@ class UploadLoopVitals(private val clock: () -> Long = System::currentTimeMillis
         lastAckAtMs = now
         lastOutcome = "durable ack"
         consecutiveFailures = 0
+        backoffMs = 0L
     }
 
     fun attemptFailed(message: String): Unit = synchronized(lock) {

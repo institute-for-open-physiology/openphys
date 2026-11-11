@@ -24,9 +24,9 @@ class BacklogStatusMonitorTest {
         assertFalse(initial.backlogKnown)
         assertEquals("queue status checking", initial.backlogDescription())
 
-        val measured = initial.withBacklog(BacklogStats(records = 0, bytes = 0, oldestUnixNs = null))
+        val measured = initial.withBacklog(BacklogStats(records = 0, oldestUnixNs = null))
         assertTrue(measured.backlogKnown)
-        assertEquals("0 records / 0 bytes", measured.backlogDescription())
+        assertEquals("0 records", measured.backlogDescription())
     }
 
     @Test fun applicationMonitorPublishesResidualDrainAfterCollectorServiceStops() = runTest {
@@ -40,15 +40,14 @@ class BacklogStatusMonitorTest {
         )
         val job = launch(UnconfinedTestDispatcher(testScheduler)) { monitor.run() }
 
-        queue.emit(BacklogStats(records = 7, bytes = 700, oldestUnixNs = 1))
+        queue.emit(BacklogStats(records = 7, oldestUnixNs = 1))
         assertEquals(7, status.backlogRecords)
         assertTrue(status.backlogKnown)
 
         // No service-owned job is involved: the process monitor remains alive while the residual
         // worker acknowledges the durable batch and Room emits its empty aggregate.
-        queue.emit(BacklogStats(records = 0, bytes = 0, oldestUnixNs = null))
+        queue.emit(BacklogStats(records = 0, oldestUnixNs = null))
         assertEquals(0, status.backlogRecords)
-        assertEquals(0, status.backlogBytes)
         assertTrue(status.backlogKnown)
         assertNull(status.backlogStatusError)
 
@@ -67,7 +66,7 @@ class BacklogStatusMonitorTest {
             maximumActiveSubscriptions = maxOf(maximumActiveSubscriptions, activeSubscriptions)
             try {
                 if (attempts == 1) error("database observer failed")
-                emit(BacklogStats(records = 3, bytes = 30, oldestUnixNs = 1))
+                emit(BacklogStats(records = 3, oldestUnixNs = 1))
                 awaitCancellation()
             } finally {
                 activeSubscriptions -= 1
@@ -100,7 +99,7 @@ class BacklogStatusMonitorTest {
         var status = CollectorSnapshot()
         val backlog = flow {
             attempts += 1
-            emit(BacklogStats(records = attempts.toLong(), bytes = 10, oldestUnixNs = 1))
+            emit(BacklogStats(records = attempts.toLong(), oldestUnixNs = 1))
             if (attempts > 1) awaitCancellation()
         }
         val monitor = BacklogStatusMonitor(

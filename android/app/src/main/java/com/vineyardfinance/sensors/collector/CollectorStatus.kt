@@ -16,7 +16,6 @@ data class CollectorSnapshot(
     val rssiDbm: Int? = null,
     val batteryPercent: Int? = null,
     val backlogRecords: Long = 0,
-    val backlogBytes: Long = 0,
     val backlogKnown: Boolean = false,
     val backlogStatusError: String? = null,
     val lastAck: String? = null,
@@ -81,7 +80,6 @@ object CollectorStatus {
 
 internal fun CollectorSnapshot.withBacklog(backlog: BacklogStats): CollectorSnapshot = copy(
     backlogRecords = backlog.records,
-    backlogBytes = backlog.bytes,
     backlogKnown = true,
     backlogStatusError = null,
 )
@@ -92,7 +90,7 @@ internal fun CollectorSnapshot.withBacklogUnavailable(detail: String): Collector
 )
 
 internal fun CollectorSnapshot.backlogDescription(): String = when {
-    backlogKnown -> "$backlogRecords records / $backlogBytes bytes"
+    backlogKnown -> "$backlogRecords records"
     backlogStatusError != null -> "queue status unavailable: $backlogStatusError"
     else -> "queue status checking"
 }

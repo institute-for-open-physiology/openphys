@@ -329,7 +329,7 @@ class H10Collector(
                 val elapsedDelta = elapsedNow - clockAnchorElapsedMs
                 val clockStepMs = wallDelta - elapsedDelta
                 writer.event("collector_health", "info", "streaming", RecordJson.fields(mapOf(
-                    "backlog_records" to backlog.records, "backlog_bytes" to backlog.bytes,
+                    "backlog_records" to backlog.records,
                     "local_free_bytes" to freeBytes,
                     "phone_battery_percent" to batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY),
                     "power_save_mode" to powerManager.isPowerSaveMode,

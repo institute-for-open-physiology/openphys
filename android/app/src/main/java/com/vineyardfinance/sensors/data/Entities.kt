@@ -47,7 +47,6 @@ data class RuntimeStateEntity(@PrimaryKey val key: String, val value: String)
 
 data class BacklogStats(
     val records: Long,
-    val bytes: Long,
     val oldestUnixNs: Long?,
 )
 

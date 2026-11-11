@@ -23,7 +23,6 @@ class NotificationOwner(
         val detail: String = "Collection is disabled",
         val lastError: String? = null,
         val backlogRecords: Long = 0,
-        val backlogBytes: Long = 0,
         val backlogKnown: Boolean = false,
         val backlogStatusError: String? = null,
         val batteryPercent: Int? = null,
@@ -98,7 +97,7 @@ class NotificationOwner(
         }
         val backlog = when {
             snapshot.backlogKnown ->
-                "queued ${snapshot.backlogRecords} records / ${snapshot.backlogBytes} bytes"
+                "queued ${snapshot.backlogRecords} records"
             snapshot.backlogStatusError != null ->
                 "queue status unavailable: ${snapshot.backlogStatusError}"
             else -> "queue status checking"
@@ -155,7 +154,6 @@ class CollectorNotificationMapper(
                 detail = snapshot.detail,
                 lastError = snapshot.lastError,
                 backlogRecords = snapshot.backlogRecords,
-                backlogBytes = snapshot.backlogBytes,
                 backlogKnown = snapshot.backlogKnown,
                 backlogStatusError = snapshot.backlogStatusError,
                 batteryPercent = snapshot.batteryPercent,
