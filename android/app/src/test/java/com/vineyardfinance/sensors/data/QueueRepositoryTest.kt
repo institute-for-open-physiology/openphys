@@ -187,6 +187,27 @@ class QueueRepositoryTest {
     }
 
     @Test
+    fun preservesQueuedRecordJsonWithoutReencoding() = runTest {
+        val recordJson = "{ \"record_id\" : \"preserved\", \"source_seq\" : 0 }"
+        database.queueDao().insertRecord(
+            PendingRecordEntity(
+                sourceSeq = 0,
+                recordId = "preserved",
+                captureSessionId = capture.captureSessionId,
+                writerEpochId = capture.writerEpochId,
+                connectionId = null,
+                collectorUnixNs = 1,
+                collectorMonotonicNs = 2,
+                kind = "collector_event",
+                recordJson = recordJson,
+                encodedBytes = recordJson.toByteArray().size,
+            ),
+        )
+
+        assertTrue(repository.nextBatch()!!.bodyJson.contains("\"records\":[$recordJson]"))
+    }
+
+    @Test
     fun batchNeverCrossesWriterEpochAndAckDeletesOnlyCoveredData() = runTest {
         repository.append(capture, record("one"))
         val other =
@@ -248,6 +269,33 @@ class QueueRepositoryTest {
         assertTrue(body.contains("\"physical_device_id\":\"h10_a1b2c3d4\""))
         assertTrue(!body.contains("h10_0a0b0c0d"))
     }
+
+    @Test fun backlogMatchesAFullScanThroughAppendAndAck() = runTest {
+        repeat(300) { repository.append(capture, record("record-$it")) }
+        assertEquals(scan(), repository.backlog())
+        while (true) {
+            val batch = repository.nextBatch() ?: break
+            repository.acknowledge(batch, batch.lastSourceSeq)
+            assertEquals(scan(), repository.backlog())
+        }
+        assertEquals(BacklogStats(0, null), repository.backlog())
+    }
+
+    @Test fun backlogQueryNeverScansPendingRecords() {
+        val plan = database.openHelper.readableDatabase.query("EXPLAIN QUERY PLAN ${QueueDao.BACKLOG}").use { cursor ->
+            generateSequence { if (cursor.moveToNext()) cursor.getString(3) else null }.toList()
+        }
+        println("backlog plan: $plan")
+        assertTrue(plan.toString(), plan.none { it.startsWith("SCAN pending_records") })
+    }
+
+    private fun scan(): BacklogStats =
+        database.openHelper.readableDatabase.query(
+            "SELECT COUNT(*), MIN(collectorUnixNs) FROM pending_records",
+        ).use { cursor ->
+            cursor.moveToFirst()
+            BacklogStats(cursor.getLong(0), if (cursor.isNull(1)) null else cursor.getLong(1))
+        }
 
     private fun record(event: String) =
         RawRecord(

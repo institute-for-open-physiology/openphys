@@ -1,6 +1,7 @@
 package com.vineyardfinance.sensors.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.migration.Migration
@@ -9,8 +10,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [CounterEntity::class, PendingRecordEntity::class, UploadBatchEntity::class, RuntimeStateEntity::class, SensorEvent::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
+    // Version 3 is installed on phones but changes nothing, so Room derives the step from the exported schemas.
+    autoMigrations = [AutoMigration(from = 2, to = 3)],
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun queueDao(): QueueDao

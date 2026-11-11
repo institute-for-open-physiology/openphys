@@ -66,7 +66,6 @@ class CollectorNotificationLifecycleTest {
                 accUnixNs = 5_100_000_000L,
                 hrUnixNs = 4_000_000_000L,
                 backlogRecords = 7,
-                backlogBytes = 700,
                 backlogKnown = true,
                 batteryPercent = 70,
                 rssiDbm = -52,

@@ -72,9 +72,11 @@ class IngestUploader(
                 vitals.reconnectWait(false)
                 delayMs = 250L
             } else {
+                // Backoff counts consecutive failures; an accepted batch restarts it.
+                if (result.uploadedRecords > 0) delayMs = 250L
                 vitals.backoff(delayMs)
                 delay(delayMs + random.nextLong(0, 251))
-                delayMs = min(delayMs * 2, 30_000L)
+                delayMs = min(delayMs * 2, MAX_BACKOFF_MS)
             }
         }
     }
@@ -133,6 +135,7 @@ class IngestUploader(
         const val INGEST_PATH = "/api/v1/ingest/batches"
         const val RECONNECT_REQUIRED_CODE = "device_reconnect_required"
         const val INTER_BATCH_DELAY_MS = 150L
+        const val MAX_BACKOFF_MS = 15 * 60_000L
         private const val RECONNECT_POLL_MS = 1_000L
 
         private fun terminalReconnectCode(body: String): Boolean = runCatching {

@@ -54,10 +54,10 @@ interface QueueDao {
     @Query("DELETE FROM upload_batches WHERE lastSourceSeq <= :sequence")
     suspend fun deleteBatchesThrough(sequence: Long): Int
 
-    @Query("SELECT COUNT(*) AS records, COALESCE(SUM(encodedBytes), 0) AS bytes, MIN(collectorUnixNs) AS oldestUnixNs FROM pending_records")
+    @Query(BACKLOG)
     fun observeBacklog(): Flow<BacklogStats>
 
-    @Query("SELECT COUNT(*) AS records, COALESCE(SUM(encodedBytes), 0) AS bytes, MIN(collectorUnixNs) AS oldestUnixNs FROM pending_records")
+    @Query(BACKLOG)
     suspend fun backlog(): BacklogStats
 
     @Query("SELECT MAX(sourceSeq) FROM pending_records")
@@ -68,4 +68,15 @@ interface QueueDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun putState(state: RuntimeStateEntity)
+
+    companion object {
+        // Room reruns this on every insert, and the queue can hold millions of rows, so it must
+        // not scan them. Pending rows are one contiguous sourceSeq range, so the count is MAX - MIN + 1.
+        // MIN and MAX use separate subqueries so SQLite reads each from the index in one step.
+        const val BACKLOG =
+            "SELECT COALESCE((SELECT MAX(sourceSeq) FROM pending_records) - " +
+                "(SELECT MIN(sourceSeq) FROM pending_records) + 1, 0) AS records, " +
+                "(SELECT collectorUnixNs FROM pending_records " +
+                "WHERE sourceSeq = (SELECT MIN(sourceSeq) FROM pending_records)) AS oldestUnixNs"
+    }
 }

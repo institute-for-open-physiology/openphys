@@ -3,7 +3,6 @@ package com.vineyardfinance.sensors.data
 import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.Flow
 import java.security.MessageDigest
@@ -111,7 +110,7 @@ class QueueRepository(
         }
         if (selected.isEmpty()) return null
         val batchId = UUID.randomUUID().toString()
-        val body = JsonObject().apply {
+        val header = JsonObject().apply {
             addProperty("schema_version", 1)
             addProperty("installation_id", identity.installationId)
             addProperty("batch_id", batchId)
@@ -120,9 +119,10 @@ class QueueRepository(
             addProperty("writer_epoch_id", first.writerEpochId)
             addProperty("first_source_seq", selected.first().sourceSeq)
             addProperty("last_source_seq", selected.last().sourceSeq)
-            add("records", JsonArray().apply { selected.forEach { add(gson.fromJson(it.recordJson, JsonObject::class.java)) } })
         }
-        val bodyJson = gson.toJson(body)
+        // Stored records are already JSON. Parsing and re-encoding them cost most of the upload CPU.
+        val records = selected.joinToString(",") { it.recordJson }
+        val bodyJson = gson.toJson(header).dropLast(1) + ",\"records\":[$records]}"
         require(bodyJson.toByteArray().size <= MAX_BATCH_BYTES) { "encoded batch exceeds size limit" }
         val batch = UploadBatchEntity(
             batchId = batchId,

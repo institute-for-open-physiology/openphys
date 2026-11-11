@@ -84,4 +84,11 @@ class UploadStallPolicyTest {
         val vitals = snapshot(loopLaunched = 1, attemptStarted = 5_000, outcome = 400_000)
         assertNull(UploadStallPolicy.evaluate(400_000 + stall - 1, vitals, queuedRecords = 7))
     }
+
+    @Test fun loopSleepingItsBackoffDuringAnOutageIsNotStalled() {
+        val backoff = IngestUploader.MAX_BACKOFF_MS
+        val vitals = snapshot(loopLaunched = 1, attemptStarted = 1_000, outcome = 2_000, backoff = backoff, failures = 30)
+        assertNull(UploadStallPolicy.evaluate(2_000 + backoff + stall - 1, vitals, queuedRecords = 7))
+        assertNotNull(UploadStallPolicy.evaluate(2_000 + backoff + stall, vitals, queuedRecords = 7))
+    }
 }

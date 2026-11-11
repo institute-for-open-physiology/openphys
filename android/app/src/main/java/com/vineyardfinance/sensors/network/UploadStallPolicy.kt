@@ -2,10 +2,10 @@ package com.vineyardfinance.sensors.network
 
 /**
  * Pure verdict on whether the upload loop has silently stalled. Every legitimate loop state
- * produces a progress signal within ~31 s (capped backoff), so five minutes of silence with
- * records queued means the loop is stuck, whatever the underlying cause. A server outage does
- * not qualify: failing attempts keep [UploadLoopVitals.Snapshot.attemptStartedAtMs] fresh,
- * and restarting the loop would not help.
+ * produces a progress signal within its current backoff, so five minutes of silence beyond
+ * that backoff with records queued means the loop is stuck, whatever the underlying cause.
+ * A server outage does not qualify: the loop is sleeping its recorded backoff, and restarting
+ * it would only reset the backoff.
  */
 object UploadStallPolicy {
     const val STALL_AFTER_MS = 5 * 60_000L
@@ -31,7 +31,9 @@ object UploadStallPolicy {
         val lastProgressMs = maxOf(vitals.loopLaunchedAtMs, vitals.attemptStartedAtMs, vitals.outcomeAtMs)
         if (lastProgressMs <= 0) return null
         val progressAgeMs = nowMs - lastProgressMs
-        if (progressAgeMs < STALL_AFTER_MS) return null
+        // After a failed attempt the loop sleeps its backoff before the next attempt starts.
+        val sleepingMs = if (vitals.outcomeAtMs >= vitals.attemptStartedAtMs) vitals.backoffMs else 0L
+        if (progressAgeMs < STALL_AFTER_MS + sleepingMs) return null
         return Report(
             queuedRecords = queuedRecords,
             progressAgeMs = progressAgeMs,
