@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class NavigationTests: XCTestCase {
     private var app: XCUIApplication!
@@ -197,18 +198,111 @@ final class NavigationTests: XCTestCase {
     func testServerConnectIsDisabledUntilFormIsComplete() {
         app.tabBars.buttons["Sync"].tap()
         app.buttons["Add server"].tap()
+        app.segmentedControls["sign-in-method"].buttons["Email"].tap()
         let connect = app.buttons["connect-server"]
         XCTAssertTrue(connect.waitForExistence(timeout: 3))
         XCTAssertFalse(connect.isEnabled)
-        for (placeholder, value) in [("https://server.example", "https://example.com"), ("Email", "test@example.com")] {
-            app.textFields[placeholder].tap()
-            app.textFields[placeholder].typeText(value)
-        }
+        app.textFields["Email"].tap()
+        app.textFields["Email"].typeText("test@example.com")
         app.secureTextFields["Password"].tap()
         app.secureTextFields["Password"].typeText("test-password")
         XCTAssertTrue(connect.isEnabled)
+        XCTAssertEqual(connect.label, "Connect")
         app.swipeUp()
         capture("server-connect")
+    }
+
+    func testConnectionLinkReplacesPasswordEntry() {
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        XCTAssertTrue(app.segmentedControls["sign-in-method"].buttons["Connection link"].isSelected)
+        let link = app.secureTextFields["Paste connection link"]
+        XCTAssertTrue(link.waitForExistence(timeout: 3))
+        XCTAssertFalse(app.textFields["Email"].exists)
+        XCTAssertFalse(app.buttons["connect-server"].isEnabled)
+        link.tap()
+        link.typeText("https://example.com/enroll#" + String(repeating: "a", count: 43))
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+        XCTAssertEqual(app.buttons["connect-server"].label, "Connect")
+        app.swipeUp()
+        capture("server-connection-link")
+        app.segmentedControls["sign-in-method"].buttons["Email"].tap()
+        XCTAssertTrue(app.textFields["Email"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["connect-server"].isEnabled)
+        XCTAssertEqual(app.buttons["connect-server"].label, "Connect")
+        app.segmentedControls["sign-in-method"].buttons["Connection link"].tap()
+        XCTAssertTrue(link.waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["connect-server"].isEnabled)
+    }
+
+    func testConnectionLinkPastesFromClipboard() {
+        UIPasteboard.general.string = "https://example.com/enroll#" + String(repeating: "a", count: 43)
+        defer { UIPasteboard.general.items = [] }
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        let paste = app.buttons["paste-connection-link"]
+        XCTAssertTrue(paste.waitForExistence(timeout: 3))
+        XCTAssertTrue(paste.isEnabled)
+        paste.tap()
+        let connect = app.buttons["connect-server"]
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: connect)
+        waitForExpectations(timeout: 5)
+        XCTAssertEqual(connect.label, "Connect")
+    }
+
+    func testConnectionLinkRejectsOtherServers() {
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        let address = app.textFields["https://server.example"]
+        XCTAssertTrue(address.waitForExistence(timeout: 3))
+        address.tap()
+        address.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: (address.value as? String ?? "").count) + "https://example.com")
+        let link = app.secureTextFields["Paste connection link"]
+        link.tap()
+        link.typeText("https://other.example/enroll#" + String(repeating: "a", count: 43))
+        app.swipeUp()
+        app.buttons["connect-server"].tap()
+        XCTAssertTrue(app.staticTexts["Enter a valid connection link for this server."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "remote-")).count, 2)
+    }
+
+    func testAppLinkOpensFilledFormWithoutConnecting() {
+        let url = URL(string: "openphys://example.com:10443/enroll#" + String(repeating: "a", count: 43))!
+        app.open(url)
+        let address = app.textFields["https://server.example"]
+        XCTAssertTrue(address.waitForExistence(timeout: 5))
+        XCTAssertEqual(address.value as? String, "https://example.com:10443")
+        XCTAssertEqual(app.textFields["Server name"].value as? String, "example.com")
+        XCTAssertTrue(app.segmentedControls["sign-in-method"].buttons["Connection link"].isSelected)
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+        XCTAssertEqual(app.buttons["connect-server"].label, "Connect")
+        capture("server-app-link")
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "remote-")).count, 2)
+        app.terminate()
+        app.open(url)
+        XCTAssertTrue(address.waitForExistence(timeout: 5))
+        XCTAssertEqual(address.value as? String, "https://example.com:10443")
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+    }
+
+    func testAppLinkReplacesAnOpenForm() {
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        app.open(URL(string: "openphys://example.com/enroll#" + String(repeating: "a", count: 43))!)
+        let address = app.textFields["https://server.example"]
+        expectation(for: NSPredicate(format: "value == %@", "https://example.com"), evaluatedWith: address)
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+    }
+
+    func testAppLinkCannotReplaceAConnectedAccount() {
+        app.open(URL(string: "openphys://home-server.example.com/enroll#" + String(repeating: "a", count: 43))!)
+        XCTAssertTrue(app.alerts["Cannot open connection link"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["This server is already connected. Sign out before using another connection link."].exists)
+        XCTAssertFalse(app.buttons["connect-server"].exists)
     }
 
     private func capture(_ name: String) {

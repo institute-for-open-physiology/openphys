@@ -10,7 +10,7 @@ settings:
   base:
     APP_BUNDLE_IDENTIFIER: com.christiantanul.trainingsensors
     MARKETING_VERSION: "0.2.2"
-    CURRENT_PROJECT_VERSION: "18"
+    CURRENT_PROJECT_VERSION: "20"
 targets:
   TrainingSensors:
     type: application
@@ -38,6 +38,10 @@ targets:
         CFBundleDisplayName: OpenPhys
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleURLTypes:
+          - CFBundleURLName: $(APP_BUNDLE_IDENTIFIER)
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes: [openphys]
         ITSAppUsesNonExemptEncryption: false
         NSBluetoothAlwaysUsageDescription: OpenPhys connects to your Polar H10 to record ECG, motion and heart rate.
         NSHealthShareUsageDescription: OpenPhys accesses Apple Health to save heart rate from your Polar H10.
