@@ -38,6 +38,7 @@ targets:
         CFBundleDisplayName: OpenPhys
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         NSBluetoothAlwaysUsageDescription: OpenPhys connects to your Polar H10 to record ECG, motion and heart rate.
         NSHealthShareUsageDescription: OpenPhys accesses Apple Health to save heart rate from your Polar H10.
         NSHealthUpdateUsageDescription: Save heart rate from your Polar H10 to Apple Health.
