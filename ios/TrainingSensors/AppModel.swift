@@ -104,6 +104,8 @@ final class AppModel: ObservableObject {
     }
 
     func signIn(_ id: String, email: String, password: String, connectionLink: String? = nil) async -> String? {
+        guard !preparingQueues else { return "Wait for saved servers to load, then try again." }
+        guard !signedIn.contains(id) else { return "This server is already connected. Sign out before connecting again." }
         guard let remote = remotes.first(where: { $0.id == id }) else { return "This server was removed." }
         do {
             try await enroll(remote, email: email, password: password, connectionLink: connectionLink)

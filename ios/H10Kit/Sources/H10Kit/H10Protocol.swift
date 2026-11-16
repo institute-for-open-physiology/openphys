@@ -251,6 +251,19 @@ public enum H10Identity {
 public enum EnrollmentLink {
     public static let host = "sensors-poc.vineyard-finance.com"
 
+    public static func parseAppURL(_ url: URL) -> (origin: URL, link: URL)? {
+        guard var parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              parts.scheme?.lowercased() == "openphys",
+              let host = parts.host, !host.isEmpty,
+              (1...65535).contains(parts.port ?? 443) else { return nil }
+        parts.scheme = "https"
+        guard let link = parts.url, token(from: link.absoluteString, origin: link) != nil else { return nil }
+        parts.path = ""
+        parts.fragment = nil
+        guard let origin = parts.url else { return nil }
+        return (origin, link)
+    }
+
     public static func isToken(_ value: String) -> Bool {
         value.utf8.count == 43 && value.unicodeScalars.allSatisfy { scalar in
             let v = scalar.value
@@ -262,7 +275,7 @@ public enum EnrollmentLink {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         if isToken(text) { return text }
         guard let parts = URLComponents(string: text),
-              parts.scheme?.lowercased() == "https",
+              ["https", "openphys"].contains(parts.scheme?.lowercased() ?? ""),
               parts.host?.lowercased() == origin.host?.lowercased(),
               parts.user == nil, parts.password == nil,
               (parts.port ?? 443) == (origin.port ?? 443),

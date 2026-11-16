@@ -1,10 +1,16 @@
 import SwiftUI
 import H10Kit
 
+struct ServerSheet: Identifiable {
+    let id = UUID()
+    var remote: Remote? = nil
+    var link: URL? = nil
+    var showDetails = false
+}
+
 struct SyncView: View {
     @ObservedObject var model: AppModel
-    @State private var selected: Remote?
-    @State private var adding = false
+    @Binding var sheet: ServerSheet?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var phase
 
@@ -44,7 +50,7 @@ struct SyncView: View {
                     }.padding(.horizontal, 8).frame(height: 52)
                     VStack(spacing: 16) {
                         ForEach(model.remotes) { remote in
-                            Button { selected = remote } label: {
+                            Button { sheet = ServerSheet(remote: remote, showDetails: true) } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "server.rack").font(.system(size: 23, weight: .light)).foregroundStyle(Palette.muted).frame(width: 26)
                                     VStack(alignment: .leading, spacing: 8) {
@@ -65,10 +71,8 @@ struct SyncView: View {
                     }.padding(.leading, 58)
                 }
             }.padding(.top, 8)
-            Button { adding = true } label: { Label("Add server", systemImage: "plus").font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(.plain).disabled(model.remoteError != nil)
+            Button { sheet = ServerSheet() } label: { Label("Add server", systemImage: "plus").font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(.plain).disabled(model.remoteError != nil)
         }
-        .sheet(item: $selected) { remote in RemoteDetail(model: model, id: remote.id) }
-        .sheet(isPresented: $adding) { RemoteLogin(model: model) }
     }
 }
 
@@ -102,7 +106,7 @@ private struct TransferFlow: View {
     }
 }
 
-private struct RemoteDetail: View {
+struct RemoteDetail: View {
     @ObservedObject var model: AppModel
     let id: String
     @Environment(\.dismiss) private var dismiss
@@ -180,15 +184,16 @@ private struct RemoteDetail: View {
     }
 }
 
-private struct RemoteLogin: View {
+struct RemoteLogin: View {
     @ObservedObject var model: AppModel
     var remote: Remote? = nil
+    var initialLink: URL? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var name = "Carolina Cloud"
     @State private var address = "https://sensors-poc.vineyard-finance.com"
     @State private var email = ""
     @State private var password = ""
-    @State private var usingLink = false
+    @State private var usingLink = true
     @State private var connectionLink = ""
     @State private var busy = false
     @State private var error: String?
@@ -203,19 +208,31 @@ private struct RemoteLogin: View {
                             Divider().overlay(Palette.line)
                             field("Address") { TextField("https://server.example", text: $address).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled() }
                         }.background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
+                    } else if initialLink != nil {
+                        field("Server") { Text(remote?.origin ?? "").textSelection(.enabled) }
+                            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
                     }
+                    Picker("Sign-in method", selection: $usingLink) {
+                        Text("Connection link").tag(true)
+                        Text("Email").tag(false)
+                    }.pickerStyle(.segmented).accessibilityIdentifier("sign-in-method")
+                        .onChange(of: usingLink) { _, _ in error = nil; connectionLink = ""; password = "" }
                     VStack(spacing: 0) {
                         if usingLink {
-                            field("Connection link") { SecureField("Paste connection link", text: $connectionLink).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled() }
+                            field("Connection link") {
+                                HStack {
+                                    SecureField("Paste connection link", text: $connectionLink).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                                    PasteButton(payloadType: String.self) { strings in
+                                        connectionLink = strings.first ?? ""; error = nil
+                                    }.accessibilityIdentifier("paste-connection-link")
+                                }.frame(minHeight: 44)
+                            }
                         } else {
                             field("Email") { TextField("Email", text: $email).textContentType(.username).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled() }
                             Divider().overlay(Palette.line)
                             field("Password") { SecureField("Password", text: $password).textContentType(.password) }
                         }
                     }.background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
-                    Button(usingLink ? "Use email and password" : "Use connection link") {
-                        usingLink.toggle(); error = nil; connectionLink = ""; password = ""
-                    }.buttonStyle(.plain).font(.system(size: 14, weight: .semibold)).frame(minHeight: 44)
                     if let error { Text(error).font(.footnote).foregroundStyle(Palette.bad) }
                     Button {
                         busy = true; error = nil
@@ -226,13 +243,21 @@ private struct RemoteLogin: View {
                             busy = false
                             if error == nil { password = ""; connectionLink = ""; dismiss() }
                         }
-                    } label: { HStack(spacing: 10) { if busy { ProgressView() }; Text(busy ? "Connecting…" : (usingLink ? "Connect and enable sync" : "Connect")) } }
+                    } label: { HStack(spacing: 10) { if busy { ProgressView() }; Text("Connect") } }
                     .buttonStyle(ActionButtonStyle()).disabled(busy || (usingLink ? connectionLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty : email.isEmpty || password.isEmpty) || (remote == nil && address.isEmpty)).accessibilityIdentifier("connect-server")
                 }.padding(24).disabled(busy)
             }.background(Palette.canvas).foregroundStyle(Palette.ink)
                 .navigationTitle(remote?.name ?? "Add server").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(busy) } }
-                .interactiveDismissDisabled(busy).onAppear { email = remote?.account ?? "" }
+                .interactiveDismissDisabled(busy).onAppear {
+                    email = remote?.account ?? ""
+                    if let initialLink, var parts = URLComponents(url: initialLink, resolvingAgainstBaseURL: false) {
+                        connectionLink = initialLink.absoluteString
+                        parts.path = ""; parts.fragment = nil
+                        address = parts.string ?? ""
+                        name = parts.host?.lowercased() == EnrollmentLink.host ? "Carolina Cloud" : (parts.host ?? "")
+                    }
+                }
         }.tint(Palette.ink)
     }
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

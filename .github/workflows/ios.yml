@@ -60,7 +60,12 @@ jobs:
             -only-testing:TrainingSensorsUITests/NavigationTests/testBluetoothOffExplainsHowToRestoreRecording \
             -only-testing:TrainingSensorsUITests/NavigationTests/testBluetoothDeniedOffersAppSettings \
             -only-testing:TrainingSensorsUITests/NavigationTests/testConnectionLinkReplacesPasswordEntry \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testConnectionLinkPastesFromClipboard \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testServerConnectIsDisabledUntilFormIsComplete \
             -only-testing:TrainingSensorsUITests/NavigationTests/testConnectionLinkRejectsOtherServers \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testAppLinkOpensFilledFormWithoutConnecting \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testAppLinkReplacesAnOpenForm \
+            -only-testing:TrainingSensorsUITests/NavigationTests/testAppLinkCannotReplaceAConnectedAccount \
             CODE_SIGNING_ALLOWED=NO test
       - uses: actions/upload-artifact@v4
         if: always()
