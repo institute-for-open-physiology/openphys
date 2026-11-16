@@ -184,8 +184,8 @@ private struct RemoteLogin: View {
     @ObservedObject var model: AppModel
     var remote: Remote? = nil
     @Environment(\.dismiss) private var dismiss
-    @State private var name = ""
-    @State private var address = ""
+    @State private var name = "Carolina Cloud"
+    @State private var address = "https://sensors-poc.vineyard-finance.com"
     @State private var email = ""
     @State private var password = ""
     @State private var busy = false

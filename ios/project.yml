@@ -8,9 +8,9 @@ packages:
     path: H10Kit
 settings:
   base:
-    APP_BUNDLE_IDENTIFIER: org.example.openphys  # set to a bundle ID registered to your Apple team
+    APP_BUNDLE_IDENTIFIER: com.christiantanul.trainingsensors
     MARKETING_VERSION: "0.2.2"
-    CURRENT_PROJECT_VERSION: "15"
+    CURRENT_PROJECT_VERSION: "18"
 targets:
   TrainingSensors:
     type: application
@@ -35,10 +35,11 @@ targets:
     info:
       path: TrainingSensors/Info.plist
       properties:
-        CFBundleDisplayName: Training Sensors
+        CFBundleDisplayName: OpenPhys
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSBluetoothAlwaysUsageDescription: Training Sensors connects to your Polar H10 to record ECG, motion and heart rate.
+        NSBluetoothAlwaysUsageDescription: OpenPhys connects to your Polar H10 to record ECG, motion and heart rate.
+        NSHealthShareUsageDescription: OpenPhys accesses Apple Health to save heart rate from your Polar H10.
         NSHealthUpdateUsageDescription: Save heart rate from your Polar H10 to Apple Health.
         UIBackgroundModes: [bluetooth-central]
         UILaunchScreen: {}
@@ -60,7 +61,7 @@ targets:
     info:
       path: TrainingSensorsWatch/Info.plist
       properties:
-        CFBundleDisplayName: Training Sensors
+        CFBundleDisplayName: OpenPhys
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         WKCompanionAppBundleIdentifier: $(APP_BUNDLE_IDENTIFIER)

@@ -1,8 +1,14 @@
-name: iOS build and release
+name: iOS build and TestFlight
+run-name: >-
+  ${{
+    github.event_name == 'pull_request' && format('Test & build PR #{0}', github.event.pull_request.number) ||
+    github.event_name == 'workflow_dispatch' && 'Test, build & upload to TestFlight' ||
+    'Test & build main'
+  }}
 
 on:
   push:
-    branches: [ios-client, main]
+    branches: [main]
     paths:
       - 'ios/**'
       - '!ios/**/*.md'
@@ -19,11 +25,6 @@ on:
       - 'scripts/mobile_contract.py'
       - '.github/workflows/ios.yml'
   workflow_dispatch:
-    inputs:
-      testflight:
-        description: Upload iPhone and Watch apps to TestFlight
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -34,9 +35,6 @@ jobs:
     timeout-minutes: 25
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
-    outputs:
-      tag: ${{ steps.package.outputs.tag }}
-      title: ${{ steps.package.outputs.title }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -69,24 +67,7 @@ jobs:
           path: ios/dist/Screens.xcresult
           retention-days: 14
       - name: Build iPhone and Watch; package iPhone
-        id: package
-        run: |
-          uv run --no-project ios/scripts/package.py
-          uv run --no-project python - <<'PY'
-          import os
-          import pathlib
-          import plistlib
-          import zipfile
-
-          ipa, = pathlib.Path('ios/dist').glob('*.ipa')
-          with zipfile.ZipFile(ipa) as archive:
-              info = plistlib.loads(archive.read('Payload/TrainingSensors.app/Info.plist'))
-          version = info['CFBundleShortVersionString']
-          build = info['CFBundleVersion']
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write(f'tag=ios-v{version}-{build}\n')
-              output.write(f'title=Training Sensors {version} ({build})\n')
-          PY
+        run: uv run --no-project ios/scripts/package.py
       - uses: actions/upload-artifact@v4
         with:
           name: iphone-package
@@ -96,61 +77,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  release:
-    needs: build
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    concurrency:
-      group: ios-release
-      cancel-in-progress: false
-    env:
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
-      RELEASE_TAG: ${{ needs.build.outputs.tag }}
-      RELEASE_TITLE: ${{ needs.build.outputs.title }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: iphone-package
-          path: dist
-      - name: Publish a new version
-        shell: bash
-        run: |
-          cd dist
-          sha256sum --check SHA256SUMS
-          gh api --paginate "repos/$GH_REPO/releases" \
-            | jq -s --arg tag "$RELEASE_TAG" 'add | map(select(.tag_name == $tag)) | first // empty' >release.json
-          if [ -s release.json ]; then
-            if jq -e '.draft == false' release.json >/dev/null; then
-              echo "Already released. Increase the version or build in ios/project.yml for a new release." >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            if ! jq -e --arg commit "$GITHUB_SHA" '.target_commitish == $commit' release.json >/dev/null; then
-              echo 'This version has a draft from another commit. Use a new build number.' >&2
-              exit 1
-            fi
-          else
-            cat >notes.md <<EOF
-          Install the IPA with SideStore: **My Apps > +**.
-
-          - iPhone: iOS 17+, Polar H10. No server account needed.
-          - Apple Watch: build from source with Xcode; the IPA is iPhone-only.
-
-          [Setup and screenshots](https://github.com/$GH_REPO/blob/$GITHUB_SHA/ios/README.md)
-          EOF
-            gh release create "$RELEASE_TAG" --draft --target "$GITHUB_SHA" \
-              --title "$RELEASE_TITLE" --notes-file notes.md
-          fi
-          gh release upload "$RELEASE_TAG" ./*.ipa SHA256SUMS --clobber
-          gh release edit "$RELEASE_TAG" --draft=false
-          echo "[Download release](https://github.com/$GH_REPO/releases/tag/$RELEASE_TAG)" >> "$GITHUB_STEP_SUMMARY"
-
   testflight:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.testflight && (github.ref == 'refs/heads/ios-client' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-26
     timeout-minutes: 25
     concurrency:
