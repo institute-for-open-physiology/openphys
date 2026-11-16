@@ -188,6 +188,8 @@ private struct RemoteLogin: View {
     @State private var address = "https://sensors-poc.vineyard-finance.com"
     @State private var email = ""
     @State private var password = ""
+    @State private var usingLink = false
+    @State private var connectionLink = ""
     @State private var busy = false
     @State private var error: String?
 
@@ -203,22 +205,30 @@ private struct RemoteLogin: View {
                         }.background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
                     }
                     VStack(spacing: 0) {
-                        field("Email") { TextField("Email", text: $email).textContentType(.username).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled() }
-                        Divider().overlay(Palette.line)
-                        field("Password") { SecureField("Password", text: $password).textContentType(.password) }
+                        if usingLink {
+                            field("Connection link") { SecureField("Paste connection link", text: $connectionLink).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled() }
+                        } else {
+                            field("Email") { TextField("Email", text: $email).textContentType(.username).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled() }
+                            Divider().overlay(Palette.line)
+                            field("Password") { SecureField("Password", text: $password).textContentType(.password) }
+                        }
                     }.background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
+                    Button(usingLink ? "Use email and password" : "Use connection link") {
+                        usingLink.toggle(); error = nil; connectionLink = ""; password = ""
+                    }.buttonStyle(.plain).font(.system(size: 14, weight: .semibold)).frame(minHeight: 44)
                     if let error { Text(error).font(.footnote).foregroundStyle(Palette.bad) }
                     Button {
                         busy = true; error = nil
                         Task {
-                            if let remote { error = await model.signIn(remote.id, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password) }
-                            else { error = await model.add(name: name, address: address, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password) }
+                            let link = usingLink ? connectionLink : nil
+                            if let remote { error = await model.signIn(remote.id, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password, connectionLink: link) }
+                            else { error = await model.add(name: name, address: address, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password, connectionLink: link) }
                             busy = false
-                            if error == nil { password = ""; dismiss() }
+                            if error == nil { password = ""; connectionLink = ""; dismiss() }
                         }
-                    } label: { HStack(spacing: 10) { if busy { ProgressView() }; Text(busy ? "Connecting…" : "Connect") } }
-                    .buttonStyle(ActionButtonStyle()).disabled(busy || email.isEmpty || password.isEmpty || (remote == nil && address.isEmpty)).accessibilityIdentifier("connect-server")
-                }.padding(24)
+                    } label: { HStack(spacing: 10) { if busy { ProgressView() }; Text(busy ? "Connecting…" : (usingLink ? "Connect and enable sync" : "Connect")) } }
+                    .buttonStyle(ActionButtonStyle()).disabled(busy || (usingLink ? connectionLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty : email.isEmpty || password.isEmpty) || (remote == nil && address.isEmpty)).accessibilityIdentifier("connect-server")
+                }.padding(24).disabled(busy)
             }.background(Palette.canvas).foregroundStyle(Palette.ink)
                 .navigationTitle(remote?.name ?? "Add server").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(busy) } }

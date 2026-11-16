@@ -10,7 +10,7 @@ settings:
   base:
     APP_BUNDLE_IDENTIFIER: com.christiantanul.trainingsensors
     MARKETING_VERSION: "0.2.2"
-    CURRENT_PROJECT_VERSION: "18"
+    CURRENT_PROJECT_VERSION: "19"
 targets:
   TrainingSensors:
     type: application

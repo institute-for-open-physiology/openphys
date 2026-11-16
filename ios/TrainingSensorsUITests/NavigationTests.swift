@@ -211,6 +211,43 @@ final class NavigationTests: XCTestCase {
         capture("server-connect")
     }
 
+    func testConnectionLinkReplacesPasswordEntry() {
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        app.buttons["Use connection link"].tap()
+        let link = app.secureTextFields["Paste connection link"]
+        XCTAssertTrue(link.waitForExistence(timeout: 3))
+        XCTAssertFalse(app.textFields["Email"].exists)
+        XCTAssertFalse(app.buttons["connect-server"].isEnabled)
+        link.tap()
+        link.typeText("https://example.com/enroll#" + String(repeating: "a", count: 43))
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+        app.swipeUp()
+        capture("server-connection-link")
+        app.buttons["Use email and password"].tap()
+        XCTAssertTrue(app.textFields["Email"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["connect-server"].isEnabled)
+    }
+
+    func testConnectionLinkRejectsOtherServers() {
+        app.tabBars.buttons["Sync"].tap()
+        app.buttons["Add server"].tap()
+        let address = app.textFields["https://server.example"]
+        XCTAssertTrue(address.waitForExistence(timeout: 3))
+        address.tap()
+        address.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: (address.value as? String ?? "").count) + "https://example.com")
+        app.buttons["Use connection link"].tap()
+        let link = app.secureTextFields["Paste connection link"]
+        link.tap()
+        link.typeText("https://other.example/enroll#" + String(repeating: "a", count: 43))
+        app.swipeUp()
+        app.buttons["connect-server"].tap()
+        XCTAssertTrue(app.staticTexts["Enter a valid connection link for this server."].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["connect-server"].isEnabled)
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "remote-")).count, 2)
+    }
+
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

@@ -103,21 +103,21 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func signIn(_ id: String, email: String, password: String) async -> String? {
+    func signIn(_ id: String, email: String, password: String, connectionLink: String? = nil) async -> String? {
         guard let remote = remotes.first(where: { $0.id == id }) else { return "This server was removed." }
         do {
-            try await enroll(remote, email: email, password: password)
+            try await enroll(remote, email: email, password: password, connectionLink: connectionLink)
         } catch {
             return Self.message(error)
         }
-        update(id) { $0.account = email; $0.sending = true }
+        update(id) { $0.account = connectionLink == nil ? email : nil; $0.hasConnected = true; $0.sending = true }
         routeRecords()
         uploadWaits[id]?.cancel()
         return nil
     }
 
     /// Adds a server only after signing in to it, so a failed attempt leaves nothing behind.
-    func add(name: String, address: String, email: String, password: String) async -> String? {
+    func add(name: String, address: String, email: String, password: String, connectionLink: String? = nil) async -> String? {
         if let remoteError { return remoteError }
         var origin = address.trimmingCharacters(in: .whitespacesAndNewlines)
         if !origin.contains("://") { origin = "https://" + origin }
@@ -127,12 +127,13 @@ final class AppModel: ObservableObject {
               url.path.isEmpty else { return "Enter an HTTPS server address without a path." }
         guard !remotes.contains(where: { $0.origin.lowercased() == origin.lowercased() }) else { return "This server is already added." }
         let label = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let remote = Remote(id: Ids.new(), name: label.isEmpty ? host : label, origin: origin, installationId: Ids.new(), account: email)
+        var remote = Remote(id: Ids.new(), name: label.isEmpty ? host : label, origin: origin, installationId: Ids.new(), account: connectionLink == nil ? email : nil)
         do {
-            try await enroll(remote, email: email, password: password)
+            try await enroll(remote, email: email, password: password, connectionLink: connectionLink)
         } catch {
             return Self.message(error)
         }
+        remote.hasConnected = true
         remotes.append(remote)
         Self.save(remotes)
         await open(remote)
@@ -206,9 +207,16 @@ final class AppModel: ObservableObject {
 
     // MARK: Enrollment
 
-    /// Signs in like the website, creates a one-use enrollment and exchanges it for a device credential.
-    private func enroll(_ remote: Remote, email: String, password: String) async throws {
+    /// Exchanges a supplied link, or signs in to create one, for a device credential.
+    private func enroll(_ remote: Remote, email: String, password: String, connectionLink: String? = nil) async throws {
         guard let server = remote.url else { throw H10Error("invalid server address") }
+        if let connectionLink {
+            guard let token = EnrollmentLink.token(from: connectionLink, origin: server) else {
+                throw H10Error("Enter a valid connection link for this server.")
+            }
+            try await exchange(token, remote)
+            return
+        }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieAcceptPolicy = .never
         configuration.httpShouldSetCookies = false
