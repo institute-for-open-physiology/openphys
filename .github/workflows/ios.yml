@@ -1,4 +1,10 @@
 name: iOS build and TestFlight
+run-name: >-
+  ${{
+    github.event_name == 'pull_request' && format('Test & build PR #{0}', github.event.pull_request.number) ||
+    github.event_name == 'workflow_dispatch' && 'Test, build & upload to TestFlight' ||
+    'Test & build main'
+  }}
 
 on:
   push:
